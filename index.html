@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>belajar</title>
+</head>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+             }
+             .kartu
+            {
+            background-color: white;
+            width: 300px;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0. 1);
+            }
+             h1 {color: blue;
+            text-align: center;
+            }
+            h2 {color: red;
+            margin-bottom: 5px;
+            }
+            h3 {color: red;
+            margin-bottom: 15px;
+            }
+        input{
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+        }
+        .opsi input {
+            width: auto;
+        }
+        .opsi a{
+            color: blue;
+            text-decoration: none;
+        }
+        .opsi a :hover {
+            text-decoration: underline;
+        }
+        input:focus {
+            border-color: blue;
+        }
+        button{
+            width: 100%;
+            background-color: blue;
+            color: white;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkblue;
+        }
+        #pesan {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 0;
+        }
+    </style>
+    </head>
+<body>
+    <div class="kartu">
+        <h1>web</h1>
+
+        <h2>login</h2>
+        <input type="text" id="username" placeholder="masukan username">
+
+        <h3>password</h3>
+        <input type="password" id="password" placeholder="masukan password">
+
+        <div class="opsi">
+            <label>
+                <input type="checkbox"> ingat saya
+            </label>
+            <a href="#">lupa password</a>
+        </div>
+
+        <button type="button" onclick="ceklogin()">login</button>
+        <p id="pesan"></p>
+    </div>
+
+    <script>
+        function ceklogin() {
+            let user = document.getElementById("username").value;
+            let pass = document.getElementById("password").value;
+            let pesan = document.getElementById("pesan");
+
+            if (user === "" || pass === "") {
+                pesan.style.color = "red";
+                pesan.innerText = "Username dan password wajib diisi!";
+            } else if (user === "ubed" && pass === "1234") {
+                pesan.style.color = "green";
+                pesan.innerText = "Login berhasil! Mengalihkan...";
+                window.location.href = "dashboard.html";
+            } else {
+                pesan.style.color = "red";
+                pesan.innerText = "Username atau password salah!";
+            }
+        }
+    </script>       
+</body>
+</html>
