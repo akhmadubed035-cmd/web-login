@@ -103,7 +103,7 @@
         const fileInput = document.getElementById('inputFoto');
         const catatan = document.getElementById('inputCatatan').value;
         const btn = document.getElementById('btnSimpan');
-        const file = fileInput.files[0];
+        const file = fileInput.files;
 
         if (!file && catatan.trim() === "") {
             alert("Pilih foto atau tulis catatan dulu ya!");
@@ -161,7 +161,7 @@
             wadah.appendChild(kartu);
         });
     }, (error) => {
-        document.getElementById('daftarMomen').innerHTML = "<p style='color:red;'>Error koneksi database: " + error.message + "</p>";
+        document.getElementById('daftarMomen').innerHTML = "<p style='color:red;'>Error: " + error.message + "</p>";
     });
 </script>
 
