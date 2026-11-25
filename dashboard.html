@@ -77,7 +77,7 @@
     const koleksiKenangan = collection(db, "kenangan");
 
     function kompresGambar(file) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (event) => {
@@ -85,15 +85,17 @@
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const maxWidth = 800;
+                    const maxWidth = 700;
                     const scale = maxWidth / img.width;
                     canvas.width = img.width > maxWidth ? maxWidth : img.width;
                     canvas.height = img.width > maxWidth ? img.height * scale : img.height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
                 };
+                img.onerror = (err) => reject(err);
             };
+            reader.onerror = (err) => reject(err);
         });
     }
 
@@ -158,6 +160,8 @@
             `;
             wadah.appendChild(kartu);
         });
+    }, (error) => {
+        document.getElementById('daftarMomen').innerHTML = "<p style='color:red;'>Error koneksi database: " + error.message + "</p>";
     });
 </script>
 
