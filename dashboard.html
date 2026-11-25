@@ -33,26 +33,15 @@
     </div>
 
     <h3 style="color:#c2185b;">📸 Koleksi Momen Kita</h3>
-    <div id="list">Menghubungkan ke database...</div>
+    <div id="list">Memuat data...</div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { initializeFirestore, collection, addDoc, onSnapshot } from "https://gstatic.com";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyD4fZ-ZF8CF0tvdLWW6s8_AjYuJ9kHcE14",
-        authDomain: "://firebaseapp.com",
-        projectId: "web-kenangan-26909",
-        storageBucket: "web-kenangan-26909.firebasestorage.app"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = initializeFirestore(app, { experimentalForceLongPolling: true });
-    const colRef = collection(db, "kenangan");
+<script>
+    const PROJECT_ID = "web-kenangan-26909";
+    const API_URL = `https://googleapis.com{PROJECT_ID}/databases/(default)/documents/kenangan`;
 
     function kecilkanFoto(file) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => {
@@ -60,19 +49,53 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const max = 600;
+                    const max = 500;
                     const scale = max / img.width;
                     canvas.width = img.width > max ? max : img.width;
                     canvas.height = img.width > max ? img.height * scale : img.height;
                     canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    resolve(canvas.toDataURL('image/jpeg', 0.5));
                 };
+                img.onerror = reject;
             };
+            reader.onerror = reject;
         });
     }
 
-    window.simpan = async function() {
-        const file = document.getElementById('foto').files;
+    async function muatData() {
+        const list = document.getElementById('list');
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            if (!data.documents || data.documents.length === 0) {
+                list.innerHTML = "<p>Belum ada kenangan. Yuk upload yang pertama!</p>";
+                return;
+            }
+            let items = data.documents.map(doc => {
+                const f = doc.fields || {};
+                return {
+                    gambar: f.gambar ? f.gambar.stringValue : "",
+                    teks: f.teks ? f.teks.stringValue : "",
+                    tanggal: f.tanggal ? f.tanggal.stringValue : "",
+                    waktu: f.waktu ? Number(f.waktu.integerValue) : 0
+                };
+            });
+            items.sort((a, b) => b.waktu - a.waktu);
+            list.innerHTML = items.map(item => `
+                <div class="momen">
+                    ${item.gambar ? `<img src="${item.gambar}">` : ''}
+                    <small>${item.tanggal}</small>
+                    <p>${item.teks}</p>
+                </div>
+            `).join('');
+        } catch (err) {
+            list.innerHTML = "<p style='color:red;'>Error: " + err.message + "</p>";
+        }
+    }
+
+    async function simpan() {
+        const fileInput = document.getElementById('foto');
+        const file = fileInput.files;
         const teks = document.getElementById('catatan').value;
         const btn = document.getElementById('btn');
 
@@ -85,38 +108,40 @@
         btn.innerText = "Menyimpan...";
 
         try {
-            let imgData = file ? await kecilkanFoto(file) : null;
+            let imgData = file ? await kecilkanFoto(file) : "";
             const tgl = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            await addDoc(colRef, { gambar: imgData, teks: teks, tanggal: tgl, waktu: Date.now() });
-            document.getElementById('foto').value = "";
+            
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fields: {
+                        gambar: { stringValue: imgData },
+                        teks: { stringValue: teks },
+                        tanggal: { stringValue: tgl },
+                        waktu: { integerValue: String(Date.now()) }
+                    }
+                })
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(errText);
+            }
+
+            fileInput.value = "";
             document.getElementById('catatan').value = "";
             alert("Berhasil disimpan! ❤️");
+            muatData();
         } catch (err) {
-            alert("Error: " + err.message);
+            alert("Gagal menyimpan: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Simpan Kenangan";
         }
-        btn.disabled = false;
-        btn.innerText = "Simpan Kenangan";
-    };
+    }
 
-    onSnapshot(colRef, (snap) => {
-        const list = document.getElementById('list');
-        if (snap.empty) {
-            list.innerHTML = "<p>Belum ada kenangan. Yuk upload yang pertama!</p>";
-            return;
-        }
-        let items = [];
-        snap.forEach(d => items.push(d.data()));
-        items.sort((a, b) => (b.waktu || 0) - (a.waktu || 0));
-        list.innerHTML = items.map(item => `
-            <div class="momen">
-                ${item.gambar ? `<img src="${item.gambar}">` : ''}
-                <small>${item.tanggal || ''}</small>
-                <p>${item.teks || ''}</p>
-            </div>
-        `).join('');
-    }, (err) => {
-        document.getElementById('list').innerHTML = "<p style='color:red;'>Gagal terhubung: " + err.message + "</p>";
-    });
+    muatData();
 </script>
 </body>
 </html>
