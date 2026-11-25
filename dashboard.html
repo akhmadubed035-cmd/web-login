@@ -5,65 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kenangan Kita Berdua ❤️</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #fff0f5; color: #333; margin: 0; padding: 20px;
-        }
-        .container { max-width: 800px; margin: auto; }
-        .header {
-            text-align: center; padding: 25px; background: white;
-            border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px;
-        }
-        .header h1 { color: #e91e63; margin: 0; }
-        .box-form {
-            background: white; padding: 20px; border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 30px;
-        }
-        .box-form h3 { margin-top: 0; color: #c2185b; }
-        input[type="file"], textarea {
-            width: 100%; padding: 10px; margin-bottom: 12px;
-            border: 1px solid #f8bbd0; border-radius: 8px; box-sizing: border-box;
-        }
-        button {
-            background: #e91e63; color: white; border: none; padding: 12px 20px;
-            border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%;
-        }
+        body { font-family: sans-serif; background: #fff0f5; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h1 { color: #e91e63; text-align: center; margin-top: 0; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #f8bbd0; border-radius: 8px; box-sizing: border-box; }
+        button { background: #e91e63; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; width: 100%; font-size: 16px; cursor: pointer; }
         button:disabled { background: #ccc; }
-        .galeri {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px; margin-top: 15px;
-        }
-        .kartu {
-            background: white; padding: 12px; border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-        }
-        .kartu img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; }
-        .kartu small { color: #888; display: block; margin-top: 8px; }
-        .kartu p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+        .momen { background: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        .momen img { width: 100%; border-radius: 8px; }
+        .momen small { color: #888; display: block; margin-top: 8px; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <div class="header">
+    <div class="card">
         <h1>Cerita & Kenangan Kita ❤️</h1>
-        <p>Semua foto jalan-jalan dan catatan kecil kita tersimpan online di sini.</p>
+        <p style="text-align:center;">Tempat menyimpan momen jalan-jalan dan catatan kita berdua.</p>
     </div>
 
-    <div class="box-form">
-        <h3>➕ Tambah Momen Baru</h3>
-        <input type="file" id="inputFoto" accept="image/*">
-        <textarea id="inputCatatan" rows="3" placeholder="Tulis cerita atau catatan kenangan kita..."></textarea>
-        <button id="btnSimpan" onclick="prosesUpload()">Simpan Kenangan</button>
+    <div class="card">
+        <h3 style="color:#c2185b; margin-top:0;">➕ Tambah Momen Baru</h3>
+        <input type="file" id="foto" accept="image/*">
+        <textarea id="catatan" rows="3" placeholder="Tulis cerita atau catatan kenangan kita..."></textarea>
+        <button id="btn" onclick="simpan()">Simpan Kenangan</button>
     </div>
 
-    <h3 style="color: #c2185b;">📸 Koleksi Momen Kita</h3>
-    <div class="galeri" id="daftarMomen">Memuat kenangan...</div>
+    <h3 style="color:#c2185b;">📸 Koleksi Momen Kita</h3>
+    <div id="list">Menghubungkan ke database...</div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://gstatic.com";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://gstatic.com";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://gstatic.com";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD4fZ-ZF8CF0tvdLWW6s8_AjYuJ9kHcE14",
@@ -74,96 +48,74 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const koleksiKenangan = collection(db, "kenangan");
+    const colRef = collection(db, "kenangan");
 
-    function kompresGambar(file) {
-        return new Promise((resolve, reject) => {
+    function kecilkanFoto(file) {
+        return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = (event) => {
+            reader.onload = (e) => {
                 const img = new Image();
-                img.src = event.target.result;
+                img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const maxWidth = 700;
-                    const scale = maxWidth / img.width;
-                    canvas.width = img.width > maxWidth ? maxWidth : img.width;
-                    canvas.height = img.width > maxWidth ? img.height * scale : img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const max = 600;
+                    const scale = max / img.width;
+                    canvas.width = img.width > max ? max : img.width;
+                    canvas.height = img.width > max ? img.height * scale : img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
                     resolve(canvas.toDataURL('image/jpeg', 0.6));
                 };
-                img.onerror = (err) => reject(err);
             };
-            reader.onerror = (err) => reject(err);
         });
     }
 
-    window.prosesUpload = async function() {
-        const fileInput = document.getElementById('inputFoto');
-        const catatan = document.getElementById('inputCatatan').value;
-        const btn = document.getElementById('btnSimpan');
-        const file = fileInput.files;
+    window.simpan = async function() {
+        const file = document.getElementById('foto').files;
+        const teks = document.getElementById('catatan').value;
+        const btn = document.getElementById('btn');
 
-        if (!file && catatan.trim() === "") {
+        if (!file && !teks.trim()) {
             alert("Pilih foto atau tulis catatan dulu ya!");
             return;
         }
 
         btn.disabled = true;
-        btn.innerText = "Sedang menyimpan...";
+        btn.innerText = "Menyimpan...";
 
         try {
-            let gambarBase64 = null;
-            if (file) {
-                gambarBase64 = await kompresGambar(file);
-            }
-
-            const tanggalTeks = new Date().toLocaleDateString('id-ID', {
-                day: 'numeric', month: 'long', year: 'numeric'
-            });
-
-            await addDoc(koleksiKenangan, {
-                gambar: gambarBase64,
-                teks: catatan,
-                tanggal: tanggalTeks,
-                waktu: serverTimestamp()
-            });
-
-            fileInput.value = "";
-            document.getElementById('inputCatatan').value = "";
-            alert("Kenangan berhasil disimpan! ❤️");
-        } catch (error) {
-            alert("Gagal menyimpan: " + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Simpan Kenangan";
+            let imgData = file ? await kecilkanFoto(file) : null;
+            const tgl = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            await addDoc(colRef, { gambar: imgData, teks: teks, tanggal: tgl, waktu: Date.now() });
+            document.getElementById('foto').value = "";
+            document.getElementById('catatan').value = "";
+            alert("Berhasil disimpan! ❤️");
+        } catch (err) {
+            alert("Error: " + err.message);
         }
+        btn.disabled = false;
+        btn.innerText = "Simpan Kenangan";
     };
 
-    const q = query(koleksiKenangan, orderBy("waktu", "desc"));
-    onSnapshot(q, (snapshot) => {
-        const wadah = document.getElementById('daftarMomen');
-        wadah.innerHTML = "";
-        if (snapshot.empty) {
-            wadah.innerHTML = "<p>Belum ada kenangan tersimpan. Yuk upload yang pertama!</p>";
+    onSnapshot(colRef, (snap) => {
+        const list = document.getElementById('list');
+        if (snap.empty) {
+            list.innerHTML = "<p>Belum ada kenangan. Yuk upload yang pertama!</p>";
             return;
         }
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const kartu = document.createElement('div');
-            kartu.className = 'kartu';
-            kartu.innerHTML = `
-                ${data.gambar ? `<img src="${data.gambar}" alt="Foto Kenangan">` : ''}
-                <small>${data.tanggal || ''}</small>
-                <p>${data.teks || ''}</p>
-            `;
-            wadah.appendChild(kartu);
-        });
-    }, (error) => {
-        document.getElementById('daftarMomen').innerHTML = "<p style='color:red;'>Error: " + error.message + "</p>";
+        let items = [];
+        snap.forEach(d => items.push(d.data()));
+        items.sort((a, b) => (b.waktu || 0) - (a.waktu || 0));
+        list.innerHTML = items.map(item => `
+            <div class="momen">
+                ${item.gambar ? `<img src="${item.gambar}">` : ''}
+                <small>${item.tanggal || ''}</small>
+                <p>${item.teks || ''}</p>
+            </div>
+        `).join('');
+    }, (err) => {
+        document.getElementById('list').innerHTML = "<p style='color:red;'>Gagal terhubung: " + err.message + "</p>";
     });
 </script>
-
 </body>
 </html>
