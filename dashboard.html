@@ -15,6 +15,7 @@
         .momen { background: white; padding: 12px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
         .momen img { width: 100%; border-radius: 8px; }
         .momen small { color: #888; display: block; margin-top: 8px; }
+        .momen p { margin: 8px 0 0; line-height: 1.5; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -37,7 +38,7 @@
 
 <script type="module">
     import { initializeApp } from "https://gstatic.com";
-    import { getFirestore, collection, addDoc, onSnapshot } from "https://gstatic.com";
+    import { initializeFirestore, collection, addDoc, onSnapshot } from "https://gstatic.com";
 
     const firebaseConfig = {
         apiKey: "AIzaSyD4fZ-ZF8CF0tvdLWW6s8_AjYuJ9kHcE14",
@@ -47,7 +48,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db = initializeFirestore(app, { experimentalForceLongPolling: true });
     const colRef = collection(db, "kenangan");
 
     function kecilkanFoto(file) {
